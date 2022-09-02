@@ -4,14 +4,11 @@
 
 #include <cstring>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
 #include "listen-socket.hpp"
-
-//
-// https://github.com/bozkurthan/Simple-TCP-Server-Client-CPP-Example/blob/master/tcp-Server.cpp
-//
 
 ListenSocket::ListenSocket(const int32_t tcpPort, const std::string bindAddress)
 {
@@ -27,9 +24,17 @@ ListenSocket::ListenSocket(const int32_t tcpPort, const std::string bindAddress)
     socketFd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (socketFd < 0) throw std::string("Unable to create the underlying listen socket, reason: " + std::to_string(errno));
 
+//  // turn of Nagel's algorithm, inherited by associated sockets
+//  //
+//  const int32_t noDelayFlag = 1;
+//  const int32_t noDelayStatus = setsockopt(socketFd, IPPROTO_TCP, TCP_NODELAY, &noDelayFlag, sizeof(int32_t));
+//  if (noDelayStatus < 0) throw std::string("Unable to disable Nagel's algorithm on the underlying listen socket, reason: " + std::to_string(errno));
+
+    // allow the socket to rebind whilst in the TCP_WAIT state
     //
-    // FIXME! set socket options, turn of Nagel's algorithm, add timeout on accept() to allow shutdown() if blocking
-    //
+    const int32_t enableReuseAddr = 1;
+    const int32_t reuseAddrStatus = setsockopt(socketFd, SOL_SOCKET, SO_REUSEADDR, &enableReuseAddr, sizeof(int32_t));
+    if (reuseAddrStatus < 0) throw std::string("Unable to set SO_REUSEADDR on the underlying listen socket, reason: " + std::to_string(errno));
 
     const int32_t bindStatus = bind(socketFd, (struct sockaddr*)&socketEndpoint, sizeof(socketEndpoint));
     if(bindStatus < 0) throw std::string("Unable to bind the listen socket to address: " + bindAddress);
@@ -38,42 +43,7 @@ ListenSocket::ListenSocket(const int32_t tcpPort, const std::string bindAddress)
     //
     const int32_t listenStatus = listen(socketFd, 1);
     if (listenStatus < 0) throw std::string("Unable to configure the underlying to socket listen for incoming connections, reason: " + std::to_string(errno));
-
-/*      // if enabled, start up the receiver task
-        //
-        doReceive = true;
-        if (enableReceiver)
-        {
-            rxTask = std::thread([this, rxListener]() {
-                struct timeval timeout;
-                timeout.tv_sec = 0;
-                timeout.tv_usec = RX_SELECT_TIMEOUT_US;
-
-                fd_set readFdSet;
-                uint8_t rxBuffer[RX_BUFFER_SIZE];
-                const int32_t maxFd = 1 + deviceFd;
-                while (doReceive)
-                {
-                    FD_ZERO(&readFdSet);
-                    FD_SET(deviceFd, &readFdSet);
-
-                    auto fdCount = select(maxFd, &readFdSet, nullptr, nullptr, &timeout);
-                    if (fdCount > 0 && FD_ISSET(deviceFd, &readFdSet))
-                    {
-                        // FIXME! currently ignoring read() errors, i.e. a -ve return value
-                        //        perhaps add an error callback...
-                        //
-                        const int32_t bytesRead = ::read(deviceFd, rxBuffer, RX_BUFFER_SIZE);
-                        if (bytesRead > 0) rxListener(rxBuffer, bytesRead);
-                    }
-                }
-            });
-        } */
 }
-
-//void ListenSocket::setRxHandler(const ReadListener& rxListener)
-//{
-//}
 
 // FIXME! use std::chrono
 //
@@ -110,21 +80,5 @@ std::optional<PlainSocket> ListenSocket::accept(const uint32_t msTimeout) const
 
 void ListenSocket::close() const
 {
-    ::close(socketFd);
-}
-
-void ListenSocket::shutdown() const
-{
-    ::close(socketFd);
-}
-
-ListenSocket::~ListenSocket()
-{
-/*  if (enableReceiver)
-    {
-        doReceive = false;
-        rxTask.join();
-    } */
-
     ::close(socketFd);
 }
