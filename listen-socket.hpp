@@ -6,17 +6,15 @@
 #define H_LISTEN_SOCKET
 
 #include <cstdint>
-#include <thread>
 #include <string>
 
-#include <arpa/inet.h>
-
 #include "read-listener.hpp"
+#include "plain-socket.hpp"
 
 class ListenSocket
 {
-    public:
-        static inline const uint8_t NEW_LINE[] = {0x0d, 0x0a};
+//public:
+//    static inline const uint8_t NEW_LINE[] = {0x0d, 0x0a};
 
     private:
         const static inline std::string DEFAULT_BIND_ADDRESS = "127.0.0.1";
@@ -26,27 +24,18 @@ class ListenSocket
 
 //      const bool enableReceiver;
 //      const std::string& deviceName;
-        int32_t listenSocketFd, clientSocketFd;
-        sockaddr_in clientSocketAddress;
+        int32_t socketFd;
+        sockaddr_in socketEndpoint;
 //      bool doReceive;
 //      std::thread rxTask;
 
     public:
         ListenSocket(const int32_t tcpPort, const std::string bindAddress = DEFAULT_BIND_ADDRESS);
-        void setRxHandler(const ReadListener& rxListener);
-        sockaddr_in accept();
+//void setRxHandler(const ReadListener& rxListener);
+        PlainSocket accept();
         void close();
         void shutdown();
-
-        void write(const uint8_t bytes[], int32_t length) const;
-        void write(const uint8_t singleByte) const;
-        void print(const std::string& text) const;
-        void printLine() const;
-        void printLine(const std::string& text) const;
         ~ListenSocket();
-
-        static const std::string toIpString(const sockaddr_in rawIpEndpoint);
-        static const uint32_t toTcpPort(const sockaddr_in rawIpEndpoint);
 };
 
 #endif
