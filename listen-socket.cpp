@@ -75,24 +75,45 @@ ListenSocket::ListenSocket(const int32_t tcpPort, const std::string bindAddress)
 //{
 //}
 
-PlainSocket ListenSocket::accept()
+// FIXME! use std::chrono
+//
+std::optional<PlainSocket> ListenSocket::accept(const uint32_t msTimeout) const
 {
-    // note, ::accept() updates the clientSocketAddressSize, with the actual size, not used here but explains the reference
-    //
-    sockaddr_in clientSocketEndpoint;
-    socklen_t clientSocketEndpointSize = sizeof(clientSocketEndpoint);
-    const int32_t clientSocketFd = ::accept(socketFd, (sockaddr*)&clientSocketEndpoint, &clientSocketEndpointSize);
-    if (clientSocketFd < 0) throw std::string("Error accepting client request, reason: " + std::to_string(errno));
+    struct timeval timeout;
+    timeout.tv_sec = 0;
+    timeout.tv_usec = msTimeout * 1000;
 
-    return PlainSocket(clientSocketFd, clientSocketEndpoint);
+    const int32_t maxFd = 1 + socketFd;
+    fd_set listenFdSet;
+    FD_ZERO(&listenFdSet);
+    FD_SET(socketFd, &listenFdSet);
+    auto fdCount = select(maxFd, &listenFdSet, nullptr, nullptr, &timeout);
+    if (fdCount > 0 && FD_ISSET(socketFd, &listenFdSet))
+    {
+        // note, ::accept() updates the clientSocketAddressSize, with the actual size, not used here but explains the reference
+        //
+        sockaddr_in clientSocketEndpoint;
+        socklen_t clientSocketEndpointSize = sizeof(clientSocketEndpoint);
+        const int32_t clientSocketFd = ::accept(socketFd, (sockaddr*)&clientSocketEndpoint, &clientSocketEndpointSize);
+        if (clientSocketFd < 0) throw std::string("Error accepting client request, reason: " + std::to_string(errno));
+
+        return PlainSocket(clientSocketFd, clientSocketEndpoint);
+    }
+    else
+    {
+        // the timeout condition
+        //
+        return std::nullopt;
+    }
+
 }
 
-void ListenSocket::close()
+void ListenSocket::close() const
 {
     ::close(socketFd);
 }
 
-void ListenSocket::shutdown()
+void ListenSocket::shutdown() const
 {
     ::close(socketFd);
 }

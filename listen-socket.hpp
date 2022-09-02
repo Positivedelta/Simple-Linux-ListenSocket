@@ -6,6 +6,7 @@
 #define H_LISTEN_SOCKET
 
 #include <cstdint>
+#include <optional>
 #include <string>
 
 #include "read-listener.hpp"
@@ -32,9 +33,9 @@ class ListenSocket
     public:
         ListenSocket(const int32_t tcpPort, const std::string bindAddress = DEFAULT_BIND_ADDRESS);
 //void setRxHandler(const ReadListener& rxListener);
-        PlainSocket accept();
-        void close();
-        void shutdown();
+        std::optional<PlainSocket> accept(const uint32_t msTimeout) const;
+        void close() const;
+        void shutdown() const;
         ~ListenSocket();
 };
 

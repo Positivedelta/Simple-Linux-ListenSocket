@@ -16,9 +16,8 @@ void PlainSocket::setRxHandler(const ReadListener& rxListener)
 
 const std::string PlainSocket::getIpAddress() const
 {
-//inet_ntop(AF_INET, &(clientAddress.sin_addr), clientIpString, INET_ADDRSTRLEN);
-    char dottedString[INET_ADDRSTRLEN + 1];
-    auto result = inet_ntop(AF_INET, &(socketEndpoint.sin_addr), dottedString, sizeof(dottedString));
+    char dottedString[INET_ADDRSTRLEN];
+    auto result = inet_ntop(AF_INET, &(socketEndpoint.sin_addr), dottedString, INET_ADDRSTRLEN);
     if (result == nullptr) throw std::string("Unable to convert " + std::to_string(socketEndpoint.sin_addr.s_addr) + " to a dotted IP4 address string");
 
     return std::string(dottedString);
