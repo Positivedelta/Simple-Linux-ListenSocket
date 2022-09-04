@@ -4,17 +4,18 @@
 
 #include <unistd.h>
 
-// FIXME! remove when working...
-//
-#include <iostream>
-
 #include "plain-socket.hpp"
 
 PlainSocket::PlainSocket(const int32_t socketFd, const sockaddr_in socketEndpoint):
-    socketFd(socketFd), socketEndpoint(socketEndpoint) {
+    socketFd(socketFd), socketEndpoint(socketEndpoint), doReceive(false) {
+}
 
+// FIXME! doReceive needs to be atomic
+//
+void PlainSocket::setRxHandler(const ReadListener& rxHandler)
+{
     doReceive = true;
-    rxTask = std::thread([this, socketFd]() {
+    rxTask = std::thread([&rxHandler, this]() {
         struct timeval timeout;
         timeout.tv_sec = 0;
         timeout.tv_usec = RX_SELECT_TIMEOUT_US;
@@ -33,20 +34,11 @@ PlainSocket::PlainSocket(const int32_t socketFd, const sockaddr_in socketEndpoin
                 // FIXME! currently ignoring read() errors, i.e. a -ve return value
                 //        perhaps add an error callback...
                 //
-//              const int32_t bytesRead = ::read(socketFd, rxBuffer, RX_BUFFER_SIZE);
-                const int32_t bytesRead = recv(socketFd, rxBuffer, RX_BUFFER_SIZE, 0); //MSG_DONTWAIT);
-                std::cout << "Rxed byte count: " << bytesRead << "\n";
-//              if (bytesRead > 0) rxListener(rxBuffer, bytesRead);
+                const int32_t bytesRead = recv(socketFd, rxBuffer, RX_BUFFER_SIZE, 0);
+                if (bytesRead > 0) rxHandler(rxBuffer, bytesRead);
             }
         }
     });
-}
-
-// FIXME! this needs to be atomic
-//
-void PlainSocket::setRxHandler(const ReadListener& listener)
-{
-    rxListener = listener;
 }
 
 const std::string PlainSocket::getIpAddress() const
@@ -75,7 +67,6 @@ void PlainSocket::write(const uint8_t bytes[], int32_t length) const
 {
     int32_t i = 0;
     int32_t writeStatus;
-//  while ((length > 0) && (writeStatus = ::write(socketFd, &bytes[i], length)) != length)
     while ((length > 0) && (writeStatus = send(socketFd, &bytes[i], length, 0)) != length)
     {
         if (writeStatus < 0)

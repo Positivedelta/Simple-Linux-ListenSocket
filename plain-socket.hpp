@@ -5,6 +5,7 @@
 #ifndef H_PLAIN_SOCKET
 #define H_PLAIN_SOCKET
 
+//#include <atomic>
 #include <cstdint>
 #include <string>
 #include <thread>
@@ -20,12 +21,11 @@ class PlainSocket
     private:
         const static inline int32_t RX_BUFFER_SIZE = 4096;
         const static inline int32_t RX_SELECT_TIMEOUT_US = 100000;
-        const static inline ReadListener DEFAULT_RX_LISTENER = [](const uint8_t rxedBytes[], const int32_t length) {};
 
         const int32_t socketFd;
         const sockaddr_in socketEndpoint;
-        std::reference_wrapper<const ReadListener> rxListener = DEFAULT_RX_LISTENER;
         bool doReceive;
+//      std::atomic<bool> doReceive;
         std::thread rxTask;
 
     public:
