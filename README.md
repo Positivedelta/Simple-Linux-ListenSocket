@@ -2,7 +2,7 @@
 
 #### Prerequisites
 - Linux
-- C++ 2017 (older versions are fine)
+- C++ 2017 (should support c++ 2011 as a minimum, but untested)
 
 #### Build Instructions
 To build and run the test application
