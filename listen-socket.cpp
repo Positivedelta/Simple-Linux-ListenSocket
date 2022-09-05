@@ -4,7 +4,6 @@
 
 #include <cstring>
 #include <netinet/in.h>
-//#include <netinet/tcp.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
@@ -23,12 +22,6 @@ ListenSocket::ListenSocket(const int32_t tcpPort, const std::string bindAddress)
 
     socketFd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (socketFd < 0) throw std::string("Unable to create the underlying listen socket, reason: " + std::to_string(errno));
-
-//  // turn of Nagel's algorithm, inherited by associated sockets
-//  //
-//  const int32_t noDelayFlag = 1;
-//  const int32_t noDelayStatus = setsockopt(socketFd, IPPROTO_TCP, TCP_NODELAY, &noDelayFlag, sizeof(int32_t));
-//  if (noDelayStatus < 0) throw std::string("Unable to disable Nagel's algorithm on the underlying listen socket, reason: " + std::to_string(errno));
 
     // allow the socket to rebind whilst in the TCP_WAIT state
     //

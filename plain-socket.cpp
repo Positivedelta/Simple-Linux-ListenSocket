@@ -2,6 +2,7 @@
 // (c) Bit Parallel Ltd (Max van Daalen), September 2022
 //
 
+#include <netinet/tcp.h>
 #include <unistd.h>
 
 #include "plain-socket.hpp"
@@ -14,6 +15,15 @@ PlainSocket::PlainSocket(const int32_t socketFd, const sockaddr_in socketEndpoin
 //
 void PlainSocket::setRxHandler(const ReadListener& rxHandler)
 {
+    // FIXME! this is a little heavy handed, but as it's unlikely to occur it'll do for the moment
+    //        investigate making rxHandler an atomic instance propery and then do a swap
+    //
+    if (doReceive)
+    {
+        doReceive = false;
+        rxTask.join();
+    }
+
     doReceive = true;
     rxTask = std::thread([&rxHandler, this]() {
         struct timeval timeout;
@@ -28,7 +38,9 @@ void PlainSocket::setRxHandler(const ReadListener& rxHandler)
             FD_ZERO(&socketReadFdSet);
             FD_SET(socketFd, &socketReadFdSet);
 
-            auto fdCount = select(maxFd, &socketReadFdSet, nullptr, nullptr, &timeout);
+            // note, the timeout allows the thread to exit when doReceive is false
+            //
+            const auto fdCount = select(maxFd, &socketReadFdSet, nullptr, nullptr, &timeout);
             if (fdCount > 0 && FD_ISSET(socketFd, &socketReadFdSet))
             {
                 // FIXME! currently ignoring read() errors, i.e. a -ve return value
@@ -39,6 +51,16 @@ void PlainSocket::setRxHandler(const ReadListener& rxHandler)
             }
         }
     });
+}
+
+// turn on / off Nagel's algorithm (on by default)
+// FIXME! this could be applied to the listen socket and then inherited, something to consider...
+//
+void PlainSocket::setTcpNoDelay(const bool tcpNoDelay) const
+{
+    const int32_t noDelayFlag = (tcpNoDelay) ? 1 : 0;
+    const int32_t noDelayStatus = setsockopt(socketFd, IPPROTO_TCP, TCP_NODELAY, &noDelayFlag, sizeof(int32_t));
+    if (noDelayStatus < 0) throw std::string("Unable to disable Nagel's algorithm on the underlying listen socket, reason: " + std::to_string(errno));
 }
 
 const std::string PlainSocket::getIpAddress() const

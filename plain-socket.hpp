@@ -25,12 +25,13 @@ class PlainSocket
         const int32_t socketFd;
         const sockaddr_in socketEndpoint;
         bool doReceive;
-//      std::atomic<bool> doReceive;
+//      std::atomic<bool> atomicDoReceive;
         std::thread rxTask;
 
     public:
         PlainSocket(const int32_t socketFd, const sockaddr_in socketEndpoint);
         void setRxHandler(const ReadListener& listener);
+        void setTcpNoDelay(const bool tcpNoDelay) const;
         const std::string getIpAddress() const;
         const uint32_t getTcpPort() const;
         void close();
