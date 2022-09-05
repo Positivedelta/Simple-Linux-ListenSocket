@@ -5,8 +5,8 @@
 #ifndef H_LISTEN_SOCKET
 #define H_LISTEN_SOCKET
 
+#include <chrono>
 #include <cstdint>
-#include <optional>
 #include <string>
 
 #include "plain-socket.hpp"
@@ -21,7 +21,7 @@ class ListenSocket
 
     public:
         ListenSocket(const int32_t tcpPort, const std::string bindAddress = DEFAULT_BIND_ADDRESS);
-        std::optional<PlainSocket> accept(const uint32_t msTimeout) const;
+        PlainSocket accept(const std::chrono::milliseconds connectTimeout) const;
         void close() const;
 };
 

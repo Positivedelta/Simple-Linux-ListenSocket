@@ -17,7 +17,6 @@ int32_t main()
     static int32_t bindPort = 11000;
     static std::string bindAddress = "192.168.1.192";
 //  static std::string bindAddress = "192.168.43.153";
-    static uint32_t acceptTimeoutMs = 100;
 
     try
     {
@@ -31,10 +30,12 @@ int32_t main()
         while (running)
         {
             // wait for a client connection...
+            // notes 1, accept() could throw an exception, but this is less kind the client code below
+            //       2, can't use std::optional<PlainSocket> as PlainSocket uses std::atomic<> and as such cannot be trivially copied (a requirement)
             //
-            auto socket = listenSocket.accept(acceptTimeoutMs);
-            if (!socket) continue;
-            std::cout << "Client connected, endpoint: (" << socket->getIpAddress() << ":" << socket->getTcpPort() << ")\n";
+            auto socket = listenSocket.accept(std::chrono::milliseconds(100));
+            if (socket.timedOut()) continue;
+            std::cout << "Client connected, endpoint: (" << socket.getIpAddress() << ":" << socket.getTcpPort() << ")\n";
 
             // communicate with the client...
             // the receive handler echos text to the console and detects the "quit" option
@@ -51,9 +52,9 @@ int32_t main()
                 }
             };
 
-            socket->setRxHandler(rxHandler);
-            socket->printLine("Hello World!");
-            socket->print("Please type some text: ");
+            socket.setRxHandler(rxHandler);
+            socket.printLine("Hello World!");
+            socket.print("Please type some text: ");
 
             int32_t i = 0;
             while (running && (i++ < 20)) std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -61,8 +62,8 @@ int32_t main()
             // time is up, tidy up the output and close the socket
             // loop for the next connection... unles "quit" was typed by the user
             //
-            socket->printLine();
-            socket->close();
+            socket.printLine();
+            socket.close();
             std::cout << "Client disconnected\n";
         }
 
