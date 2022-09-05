@@ -4,6 +4,8 @@
 
 CC=g++
 
+# should support c++11 as a minimum, but untested
+#
 CC_COMPILE_FLAGS=-std=c++17 -O3 -I .
 CC_LINK_FLAGS=-pthread
 
