@@ -5,12 +5,12 @@
 #ifndef H_PLAIN_SOCKET
 #define H_PLAIN_SOCKET
 
-#include <atomic>
 #include <cstdint>
 #include <string>
 #include <thread>
 #include <arpa/inet.h>
 
+#include "copyable-atomic.hpp"
 #include "read-listener.hpp"
 
 class PlainSocket
@@ -22,16 +22,13 @@ class PlainSocket
         const static inline int32_t RX_BUFFER_SIZE = 4096;
         const static inline int32_t RX_SELECT_TIMEOUT_US = 100000;
 
-        const bool timeOut;
         const int32_t socketFd;
         const sockaddr_in socketEndpoint;
-        std::atomic<bool> doReceive;
+        CopyableAtomic<bool> doReceive;
         std::thread rxTask;
 
     public:
-        PlainSocket();
         PlainSocket(const int32_t socketFd, const sockaddr_in socketEndpoint);
-        const bool timedOut() const;
         void setRxHandler(const ReadListener& listener);
         void setTcpNoDelay(const bool tcpNoDelay) const;
         const std::string getIpAddress() const;
@@ -43,9 +40,6 @@ class PlainSocket
         void print(const std::string& text) const;
         void printLine() const;
         void printLine(const std::string& text) const;
-
-    private:
-        void checkState() const;
 };
 
 #endif

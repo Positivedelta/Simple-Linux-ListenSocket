@@ -7,6 +7,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <optional>
 #include <string>
 
 #include "plain-socket.hpp"
@@ -21,7 +22,7 @@ class ListenSocket
 
     public:
         ListenSocket(const int32_t tcpPort, const std::string bindAddress = DEFAULT_BIND_ADDRESS);
-        PlainSocket accept(const std::chrono::milliseconds connectTimeout) const;
+        std::optional<PlainSocket> accept(const std::chrono::milliseconds connectTimeout) const;
         void close() const;
 };
 

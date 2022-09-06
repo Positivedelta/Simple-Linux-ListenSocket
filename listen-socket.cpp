@@ -38,7 +38,7 @@ ListenSocket::ListenSocket(const int32_t tcpPort, const std::string bindAddress)
     if (listenStatus < 0) throw std::string("Unable to configure the underlying to socket listen for incoming connections, reason: " + std::to_string(errno));
 }
 
-PlainSocket ListenSocket::accept(const std::chrono::milliseconds connectTimeout) const
+std::optional<PlainSocket> ListenSocket::accept(const std::chrono::milliseconds connectTimeout) const
 {
     struct timeval timeout;
     timeout.tv_sec = 0;
@@ -62,11 +62,9 @@ PlainSocket ListenSocket::accept(const std::chrono::milliseconds connectTimeout)
     }
     else
     {
-        // the timeout condition, these instances can be detected using the timedOut() method
-        // notes 1, alternatively accept() could throw an exception, this is kinder on the client code
-        //       2, can't use std::optional<PlainSocket> as PlainSocket uses std::atomic<> and as such cannot be trivially copied (a requirement)
+        // the timeout condition
         //
-        return PlainSocket();
+        return std::nullopt;
     }
 }
 
