@@ -41,6 +41,12 @@ int32_t main()
             const ReadListener rxHandler = [&running](const uint8_t bytes[], const int32_t length) {
                 if (running)
                 {
+                    if (length <= 0)
+                    {
+                        running = false;
+                        return;
+                    }
+
                     if ((length == 2) && (std::memcmp(bytes, PlainSocket::NEW_LINE, 2) == 0)) return;
 
                     const auto text = std::string(reinterpret_cast<const char*>(bytes), length);
