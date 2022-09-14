@@ -41,8 +41,6 @@ void PlainSocket::setRxHandler(const ReadListener& rxHandler)
             const auto fdCount = select(maxFd, &socketReadFdSet, nullptr, nullptr, &timeout);
             if (fdCount > 0 && FD_ISSET(socketFd, &socketReadFdSet))
             {
-                // FIXME! perhaps add an error callback...
-                //
                 // notes 1, errors are returned as a 0 or a -ve length
                 //       2, as 0 return indicates that the underlying socket has been closed
                 //       3, this read thread will exit on error

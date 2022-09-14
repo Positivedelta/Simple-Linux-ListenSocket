@@ -33,20 +33,26 @@ int32_t main()
             //
             auto socket = listenSocket.accept(std::chrono::milliseconds(100));
             if (!socket) continue;
+
+            auto connected = true;
             std::cout << "Client connected, endpoint: (" << socket->getIpAddress() << ":" << socket->getTcpPort() << ")\n";
 
             // communicate with the client...
-            // the receive handler echos text to the console and detects the "quit" option
+            // notes 1, designed to be used with PuTTy in raw mode, each line of text is only sent when RET is pressed (default behaviour) 
+            //       2, the receive handler echos text to the console and detects the "quit" option
             //
-            const ReadListener rxHandler = [&running](const uint8_t bytes[], const int32_t length) {
+            const ReadListener rxHandler = [&running, &connected](const uint8_t bytes[], const int32_t length) {
                 if (running)
                 {
-                    if (length <= 0)
-                    {
-                        running = false;
-                        return;
-                    }
+                    // notes 1, a zero or -ve length indicates an error
+                    //       2, typically a zero represents a disconnect
+                    //       3, the PlainSocket receiver thread will exit as the underlying socket has failed or been closed
+                    //       4, in this example code an error forced a re-connect
+                    //
+                    if (!(connected = (length > 0))) return;
 
+                    // ignore the CRLF, PuTTy sends the text and CRLF separately when in raw mode
+                    //
                     if ((length == 2) && (std::memcmp(bytes, PlainSocket::NEW_LINE, 2) == 0)) return;
 
                     const auto text = std::string(reinterpret_cast<const char*>(bytes), length);
@@ -61,7 +67,7 @@ int32_t main()
             socket->print("Please type some text: ");
 
             int32_t i = 0;
-            while (running && (i++ < 20)) std::this_thread::sleep_for(std::chrono::seconds(1));
+            while (running && connected && (i++ < 20)) std::this_thread::sleep_for(std::chrono::seconds(1));
 
             // time is up, tidy up the output and close the socket
             // loop for the next connection... unless "quit" was typed by the user
