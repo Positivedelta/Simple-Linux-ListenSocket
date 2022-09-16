@@ -82,7 +82,7 @@ int32_t main()
     }
     catch (const std::string& message)
     {
-        std::cout << "Unexpected exception, details: " + message << std::endl;
+        std::cout << "Unexpected exception, details: " << message << std::endl;
     }
 
     return 0;
