@@ -24,17 +24,17 @@ void PlainSocket::setRxHandler(const ReadListener& rxHandler)
 
     doReceive = true;
     rxTask = std::thread([&rxHandler, this]() {
-        struct timeval timeout;
-        timeout.tv_sec = 0;
-        timeout.tv_usec = RX_SELECT_TIMEOUT_US;
-
         fd_set socketReadFdSet;
+        struct timeval timeout;
         uint8_t rxBuffer[RX_BUFFER_SIZE];
         const int32_t maxFd = 1 + socketFd;
         while (doReceive)
         {
             FD_ZERO(&socketReadFdSet);
             FD_SET(socketFd, &socketReadFdSet);
+
+            timeout.tv_sec = 0;
+            timeout.tv_usec = RX_SELECT_TIMEOUT_US;
 
             // note, the timeout allows the thread to exit when doReceive is false
             //
