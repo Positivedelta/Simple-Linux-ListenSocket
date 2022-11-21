@@ -79,11 +79,8 @@ const uint32_t PlainSocket::getTcpPort() const
 
 void PlainSocket::close()
 {
-    if (doReceive)
-    {
-        doReceive = false;
-        rxTask.join();
-    }
+    doReceive = false;
+    if (rxTask.joinable()) rxTask.join();
 
     ::close(socketFd);
 }
