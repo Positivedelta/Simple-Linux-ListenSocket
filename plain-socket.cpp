@@ -42,7 +42,7 @@ void PlainSocket::setRxHandler(const ReadListener& rxHandler)
             if (fdCount > 0 && FD_ISSET(socketFd, &socketReadFdSet))
             {
                 // notes 1, errors are returned as a 0 or a -ve length
-                //       2, as 0 return indicates that the underlying socket has been closed
+                //       2, a 0 return indicates that the underlying socket has been closed
                 //       3, this read thread will exit on error
                 //
                 const int32_t bytesRead = recv(socketFd, rxBuffer, RX_BUFFER_SIZE, 0);
@@ -89,7 +89,7 @@ void PlainSocket::write(const uint8_t bytes[], int32_t length) const
 {
     int32_t i = 0;
     int32_t writeStatus;
-    while ((length > 0) && (writeStatus = send(socketFd, &bytes[i], length, 0)) != length)
+    while ((length > 0) && (writeStatus = send(socketFd, &bytes[i], length, MSG_NOSIGNAL)) != length)
     {
         if (writeStatus < 0)
         {
