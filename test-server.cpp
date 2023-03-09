@@ -15,8 +15,7 @@
 int32_t main()
 {
     static int32_t bindPort = 11000;
-    static std::string bindAddress = "192.168.1.192";
-//  static std::string bindAddress = "192.168.43.153";
+    static std::string bindAddress = "192.168.1.233";
 
     try
     {
