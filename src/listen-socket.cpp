@@ -30,7 +30,7 @@ ListenSocket::ListenSocket(const int32_t tcpPort, const std::string bindAddress)
     if (reuseAddrStatus < 0) throw std::string("Unable to set SO_REUSEADDR on the underlying listen socket, reason: " + std::to_string(errno));
 
     const int32_t bindStatus = bind(socketFd, (struct sockaddr*)&socketEndpoint, sizeof(socketEndpoint));
-    if(bindStatus < 0) throw std::string("Unable to bind the listen socket to address: " + bindAddress);
+    if (bindStatus < 0) throw std::string("Unable to bind the listen socket to address: " + bindAddress);
 
     // set the backlog queue to 1 as this class only supports a single connection
     //

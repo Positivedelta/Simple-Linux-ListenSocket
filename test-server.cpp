@@ -6,7 +6,6 @@
 #include <cstdint>
 #include <iostream>
 #include <string>
-#include <cstring>
 #include <thread>
 
 #include "read-listener.hpp"
@@ -50,28 +49,29 @@ int32_t main()
                     //
                     if (!(connected = (length > 0))) return;
 
-                    // ignore the CRLF, PuTTy sends the text and CRLF separately when in raw mode
+                    // note, remove any control characters present in the RXed text
                     //
-                    if ((length == 2) && (std::memcmp(bytes, PlainSocket::NEW_LINE, 2) == 0)) return;
+                    auto text = std::string(reinterpret_cast<const char*>(bytes), length);
+                    text.erase(std::remove_if(text.begin(), text.end(), [](char c) {
+                        return std::iscntrl(c);
+                    }), text.end());
 
-                    const auto text = std::string(reinterpret_cast<const char*>(bytes), length);
-                    std::cout << "[" << text.length() << "] " << text << "\n";
+                    if (text.length() > 0) std::cout << "[" << text.length() << "] " << text << "\n";
 
                     running = text.compare("quit") != 0;
                 }
             };
 
             socket->setRxHandler(rxHandler);
-            socket->printLine("Hello World!");
+            socket->printLine("Hello client, this is the server!");
             socket->print("Please type some text: ");
 
             int32_t i = 0;
-            while (running && connected && (i++ < 20)) std::this_thread::sleep_for(std::chrono::seconds(1));
+            while (running && connected && (i++ < 60)) std::this_thread::sleep_for(std::chrono::seconds(1));
 
             // time is up, tidy up the output and close the socket
             // loop for the next connection... unless "quit" was typed by the user
             //
-            socket->printLine();
             socket->close();
             std::cout << "Client disconnected\n";
         }
