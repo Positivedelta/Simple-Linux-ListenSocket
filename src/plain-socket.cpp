@@ -9,11 +9,29 @@
 #include "plain-socket.hpp"
 
 PlainSocket::PlainSocket(const int32_t remoteTcpPort, const std::string remoteIpAddress):
-    socketFd(makeSocket()), socketEndpoint(connectToEndpoint(remoteTcpPort, remoteIpAddress)), doReceive(false) {
+    socketFd(makeSocket()), socketEndpoint(makeEndpoint(remoteTcpPort, remoteIpAddress)), doReceive(false) {
 }
 
 PlainSocket::PlainSocket(const int32_t socketFd, const sockaddr_in socketEndpoint):
     socketFd(socketFd), socketEndpoint(socketEndpoint), doReceive(false) {
+}
+
+PlainSocket::PlainSocket(const PlainSocket& plainSocket):
+    socketFd(plainSocket.socketFd), socketEndpoint(plainSocket.socketEndpoint), doReceive(plainSocket.doReceive) {
+}
+
+// note, this can't close the socket, instances need to be copyable in order to work with std::optional, as used by ListenSocket
+//
+PlainSocket::~PlainSocket()
+{
+    doReceive = false;
+    if (rxTask.joinable()) rxTask.join();
+}
+
+void PlainSocket::connect() const
+{
+    const int32_t connectStatus = ::connect(socketFd, (struct sockaddr*)&socketEndpoint, sizeof(socketEndpoint));
+    if (connectStatus < 0) throw std::string("Unable to connect with endpoint"); // " + remoteIpAddress + ":" + std::to_string(remoteTcpPort));
 }
 
 void PlainSocket::setRxHandler(const ReadListener& rxHandler)
@@ -90,7 +108,7 @@ void PlainSocket::close()
     ::close(socketFd);
 }
 
-void PlainSocket::write(const uint8_t bytes[], int32_t length)// const
+void PlainSocket::write(const uint8_t bytes[], int32_t length) const
 {
     int32_t i = 0;
     int32_t writeStatus;
@@ -102,12 +120,6 @@ void PlainSocket::write(const uint8_t bytes[], int32_t length)// const
             //
             if ((errno == EINTR) || (errno == EAGAIN) || (errno == EWOULDBLOCK)) continue;
 
-            // FIXME! move this to a destructor, but only once I can get it to work with ListenSocket::accept()
-            //        for some unknown reason the std::optional<PlainSocket> gets upset and doesn't compile
-            //        then re-const the write / print methods
-            //
-            if (rxTask.joinable()) rxTask.join();
-            ::close(socketFd);
             throw std::string("Unable to write to the client socket, reason: " + std::to_string(writeStatus));
         }
 
@@ -116,30 +128,30 @@ void PlainSocket::write(const uint8_t bytes[], int32_t length)// const
     }
 }
 
-void PlainSocket::write(const uint8_t singleByte)// const
+void PlainSocket::write(const uint8_t singleByte) const
 {
     const uint8_t bytes[1] = {singleByte};
     write(bytes, 1);
 }
 
-void PlainSocket::print(const std::string& text)// const
+void PlainSocket::print(const std::string& text) const
 {
     write(reinterpret_cast<const uint8_t*>(text.data()), text.size());
 }
 
-void PlainSocket::printLine()// const
+void PlainSocket::printLine() const
 {
     write(NEW_LINE, sizeof(NEW_LINE));
 }
 
-void PlainSocket::printLine(const std::string& text)// const
+void PlainSocket::printLine(const std::string& text) const
 {
     print(text);
     write(NEW_LINE, sizeof(NEW_LINE));
 }
 
 //
-// private methods used by the constructors
+// private methods used by the port/ip address constructor
 //
 
 int32_t PlainSocket::makeSocket() const
@@ -150,16 +162,13 @@ int32_t PlainSocket::makeSocket() const
     return plainSocketFd;
 }
 
-sockaddr_in PlainSocket::connectToEndpoint(const int32_t remoteTcpPort, std::string remoteIpAddress) const
+sockaddr_in PlainSocket::makeEndpoint(const int32_t remoteTcpPort, std::string remoteIpAddress) const
 {
     sockaddr_in plainSocketEndpoint;
     std::memset((uint8_t*)&plainSocketEndpoint, 0, sizeof(plainSocketEndpoint));
     plainSocketEndpoint.sin_family = AF_INET;
     plainSocketEndpoint.sin_addr.s_addr = inet_addr(remoteIpAddress.c_str());
     plainSocketEndpoint.sin_port = htons(remoteTcpPort);
-
-    const int32_t connectStatus = connect(socketFd, (struct sockaddr*)&plainSocketEndpoint, sizeof(plainSocketEndpoint));
-    if (connectStatus < 0) throw std::string("Unable to connect with endpoint " + remoteIpAddress + ":" + std::to_string(remoteTcpPort));
 
     return plainSocketEndpoint;
 }

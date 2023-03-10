@@ -30,21 +30,26 @@ class PlainSocket
     public:
         PlainSocket(const int32_t remoteTcpPort, const std::string remoteIpAddress);
         PlainSocket(const int32_t socketFd, const sockaddr_in socketEndpoint);
+        PlainSocket(const PlainSocket& plainSocket);
+
+        void connect() const;
         void setRxHandler(const ReadListener& listener);
         void setTcpNoDelay(const bool tcpNoDelay) const;
         const std::string getIpAddress() const;
         const uint32_t getTcpPort() const;
         void close();
 
-        void write(const uint8_t bytes[], int32_t length);// const;
-        void write(const uint8_t singleByte);// const;
-        void print(const std::string& text);// const;
-        void printLine();// const;
-        void printLine(const std::string& text);// const;
+        void write(const uint8_t bytes[], int32_t length) const;
+        void write(const uint8_t singleByte) const;
+        void print(const std::string& text) const;
+        void printLine() const;
+        void printLine(const std::string& text) const;
+
+        ~PlainSocket();
 
     private:
         int32_t makeSocket() const;
-        sockaddr_in connectToEndpoint(const int32_t remoteTcpPort, const std::string remoteIpAddress) const;
+        sockaddr_in makeEndpoint(const int32_t remoteTcpPort, const std::string remoteIpAddress) const;
 };
 
 #endif

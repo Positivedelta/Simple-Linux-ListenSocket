@@ -19,9 +19,10 @@ int32_t main()
         std::cout << text << std::flush;
     };
 
+    auto socket = PlainSocket(remotePort, remoteIpAddress);
     try
     {
-        auto socket = PlainSocket(remotePort, remoteIpAddress);
+        socket.connect();
         socket.setRxHandler(rxHandler);
         socket.printLine("Hello server, this is the client!");
 
@@ -33,13 +34,13 @@ int32_t main()
 
             socket.printLine(userInput);
         }
-
-        socket.close();
     }
     catch (const std::string& message)
     {
         std::cout << "Unexpected exception, details: " << message << std::endl;
     }
+
+    socket.close();
 
     return 0;
 }
