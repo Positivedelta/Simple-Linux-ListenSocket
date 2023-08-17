@@ -1,5 +1,5 @@
 //
-// (c) Bit Parallel Ltd (Max van Daalen), September 2022
+// (c) Bit Parallel Ltd, March 2023
 //
 
 #include <cstring>
@@ -7,9 +7,9 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include "listen-socket.hpp"
+#include "listen_socket.hpp"
 
-ListenSocket::ListenSocket(const int32_t tcpPort, const std::string bindAddress)
+bpl::ListenSocket::ListenSocket(const int32_t tcpPort, const std::string& bindAddress)
 {
     // notes 1, currently only using IPv4 addressing, include the use of AF_INET6 to support IPv6
     //       2, could use htonl(INADDR_ANY) to bind the socket to all available addresses
@@ -38,7 +38,7 @@ ListenSocket::ListenSocket(const int32_t tcpPort, const std::string bindAddress)
     if (listenStatus < 0) throw std::string("Unable to configure the underlying to socket listen for incoming connections, reason: " + std::to_string(errno));
 }
 
-std::optional<PlainSocket> ListenSocket::accept(const std::chrono::milliseconds connectTimeout) const
+std::optional<bpl::PlainSocket> bpl::ListenSocket::accept(const std::chrono::milliseconds connectTimeout) const
 {
     struct timeval timeout;
     timeout.tv_sec = 0;
@@ -68,7 +68,7 @@ std::optional<PlainSocket> ListenSocket::accept(const std::chrono::milliseconds 
     }
 }
 
-void ListenSocket::close() const
+void bpl::ListenSocket::close() const
 {
     ::close(socketFd);
 }

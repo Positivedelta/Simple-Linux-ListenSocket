@@ -1,40 +1,45 @@
 //
-// (c) Bit Parallel Ltd (Max van Daalen), September 2022
+// (c) Bit Parallel Ltd, March 2023
 //
 
 #include <cstring>
 #include <netinet/tcp.h>
 #include <unistd.h>
 
-#include "plain-socket.hpp"
+#include "plain_socket.hpp"
 
-PlainSocket::PlainSocket(const int32_t remoteTcpPort, const std::string remoteIpAddress):
+bpl::PlainSocket::PlainSocket(const int32_t remoteTcpPort, const std::string& remoteIpAddress):
     socketFd(makeSocket()), socketEndpoint(makeEndpoint(remoteTcpPort, remoteIpAddress)), doReceive(false) {
 }
 
-PlainSocket::PlainSocket(const int32_t socketFd, const sockaddr_in socketEndpoint):
+bpl::PlainSocket::PlainSocket(const int32_t socketFd, const sockaddr_in socketEndpoint):
     socketFd(socketFd), socketEndpoint(socketEndpoint), doReceive(false) {
 }
 
-PlainSocket::PlainSocket(const PlainSocket& plainSocket):
+bpl::PlainSocket::PlainSocket(const PlainSocket& plainSocket):
     socketFd(plainSocket.socketFd), socketEndpoint(plainSocket.socketEndpoint), doReceive(plainSocket.doReceive) {
+}
+
+bpl::PlainSocket& bpl::PlainSocket::operator=(const PlainSocket& plainSocket)
+{
+    return *this;
 }
 
 // note, this can't close the socket, instances need to be copyable in order to work with std::optional, as used by ListenSocket
 //
-PlainSocket::~PlainSocket()
+bpl::PlainSocket::~PlainSocket()
 {
     doReceive = false;
     if (rxTask.joinable()) rxTask.join();
 }
 
-void PlainSocket::connect() const
+void bpl::PlainSocket::connect() const
 {
     const int32_t connectStatus = ::connect(socketFd, (struct sockaddr*)&socketEndpoint, sizeof(socketEndpoint));
     if (connectStatus < 0) throw std::string("Unable to connect with endpoint"); // " + remoteIpAddress + ":" + std::to_string(remoteTcpPort));
 }
 
-void PlainSocket::setRxHandler(const ReadListener& rxHandler)
+void bpl::PlainSocket::setRxHandler(const ReadListener& rxHandler)
 {
     // FIXME! this is a little heavy handed, but as it's unlikely to occur it'll do for the moment
     //        investigate making rxHandler an atomic instance propery and then do a swap
@@ -79,14 +84,14 @@ void PlainSocket::setRxHandler(const ReadListener& rxHandler)
 // turn on / off Nagel's algorithm (on by default)
 // FIXME! this could be applied to the listen socket and then inherited, something to consider
 //
-void PlainSocket::setTcpNoDelay(const bool tcpNoDelay) const
+void bpl::PlainSocket::setTcpNoDelay(const bool tcpNoDelay) const
 {
     const int32_t noDelayFlag = (tcpNoDelay) ? 1 : 0;
     const int32_t noDelayStatus = setsockopt(socketFd, IPPROTO_TCP, TCP_NODELAY, &noDelayFlag, sizeof(int32_t));
     if (noDelayStatus < 0) throw std::string("Unable to disable Nagel's algorithm on the underlying listen socket, reason: " + std::to_string(errno));
 }
 
-const std::string PlainSocket::getIpAddress() const
+const std::string bpl::PlainSocket::getIpAddress() const
 {
     char dottedString[INET_ADDRSTRLEN];
     auto result = inet_ntop(AF_INET, &(socketEndpoint.sin_addr), dottedString, INET_ADDRSTRLEN);
@@ -95,12 +100,12 @@ const std::string PlainSocket::getIpAddress() const
     return std::string(dottedString);
 }
 
-const uint32_t PlainSocket::getTcpPort() const
+const uint32_t bpl::PlainSocket::getTcpPort() const
 {
     return socketEndpoint.sin_port;
 }
 
-void PlainSocket::close()
+void bpl::PlainSocket::close()
 {
     doReceive = false;
     if (rxTask.joinable()) rxTask.join();
@@ -108,7 +113,7 @@ void PlainSocket::close()
     ::close(socketFd);
 }
 
-void PlainSocket::write(const uint8_t bytes[], int32_t length) const
+void bpl::PlainSocket::write(const uint8_t bytes[], int32_t length) const
 {
     int32_t i = 0;
     int32_t writeStatus;
@@ -128,23 +133,23 @@ void PlainSocket::write(const uint8_t bytes[], int32_t length) const
     }
 }
 
-void PlainSocket::write(const uint8_t singleByte) const
+void bpl::PlainSocket::write(const uint8_t singleByte) const
 {
     const uint8_t bytes[1] = {singleByte};
     write(bytes, 1);
 }
 
-void PlainSocket::print(const std::string& text) const
+void bpl::PlainSocket::print(const std::string& text) const
 {
     write(reinterpret_cast<const uint8_t*>(text.data()), text.size());
 }
 
-void PlainSocket::printLine() const
+void bpl::PlainSocket::printLine() const
 {
     write(NEW_LINE, sizeof(NEW_LINE));
 }
 
-void PlainSocket::printLine(const std::string& text) const
+void bpl::PlainSocket::printLine(const std::string& text) const
 {
     print(text);
     write(NEW_LINE, sizeof(NEW_LINE));
@@ -154,7 +159,7 @@ void PlainSocket::printLine(const std::string& text) const
 // private methods used by the port/ip address constructor
 //
 
-int32_t PlainSocket::makeSocket() const
+int32_t bpl::PlainSocket::makeSocket() const
 {
     int32_t plainSocketFd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (plainSocketFd < 0) throw std::string("Unable to create the client socket, reason: " + std::to_string(errno));
@@ -162,7 +167,7 @@ int32_t PlainSocket::makeSocket() const
     return plainSocketFd;
 }
 
-sockaddr_in PlainSocket::makeEndpoint(const int32_t remoteTcpPort, std::string remoteIpAddress) const
+sockaddr_in bpl::PlainSocket::makeEndpoint(const int32_t remoteTcpPort, std::string remoteIpAddress) const
 {
     sockaddr_in plainSocketEndpoint;
     std::memset((uint8_t*)&plainSocketEndpoint, 0, sizeof(plainSocketEndpoint));

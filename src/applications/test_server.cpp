@@ -1,5 +1,5 @@
 //
-// (c) Bit Parallel Ltd (Max van Daalen), September 2022
+// (c) Bit Parallel Ltd, March 2023
 //
 
 #include <chrono>
@@ -8,8 +8,8 @@
 #include <string>
 #include <thread>
 
-#include "read-listener.hpp"
-#include "listen-socket.hpp"
+#include "read_listener.hpp"
+#include "listen_socket.hpp"
 
 int32_t main()
 {
@@ -20,7 +20,7 @@ int32_t main()
     {
         // creates and binds the underlying listen socket using the provided address and port number
         //
-        auto listenSocket = ListenSocket(bindPort, bindAddress);
+        auto listenSocket = bpl::ListenSocket(bindPort, bindAddress);
         std::cout << "Listen socket created, endpoint: (" << bindAddress << ":" << bindPort << ")\n";
         std::cout << "Waiting for client connections...\n";
 
@@ -39,7 +39,7 @@ int32_t main()
             // notes 1, designed to be used with PuTTy in raw mode, each line of text is only sent when RET is pressed (default behaviour) 
             //       2, the receive handler echos text to the console and detects the "quit" option
             //
-            const ReadListener rxHandler = [&running, &connected](const uint8_t bytes[], const int32_t length) {
+            const bpl::ReadListener rxHandler = [&running, &connected](const uint8_t bytes[], const int32_t length) {
                 if (running)
                 {
                     // notes 1, a zero or -ve length indicates an error
