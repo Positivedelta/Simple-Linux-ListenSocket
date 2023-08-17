@@ -2,8 +2,8 @@
 // (c) Bit Parallel Ltd (Max van Daalen), September 2022
 //
 
-#ifndef H_LISTEN_SOCKET
-#define H_LISTEN_SOCKET
+#ifndef H_BIT_PARALLEL_LISTEN_SOCKET
+#define H_BIT_PARALLEL_LISTEN_SOCKET
 
 #include <chrono>
 #include <cstdint>
