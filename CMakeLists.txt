@@ -1,18 +1,29 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(simple-linux-listen-socket-with-client)
+project(simple-linux-simple-socket-library)
 
 add_definitions(-DAPI_EXPORTS)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_CXX_FLAGS_RELEASE "-pthread -O3")
 
-set(THREADS_PREFER_PTHREAD_FLAG ON)
-find_package(Threads REQUIRED)
+# notes 1, setup the install base path for the simple socket shared library, include files and the test applications
+#       2, setup the RPATH for the test applications in bin/ directory
+#
+# FIXME! update the path to /usr/local/bit-parallel once ready to deploy in production
+#
+set(BIT_PARALLEL_INSTALL_ROOT "${PROJECT_SOURCE_DIR}/bit-parallel")
+set(CMAKE_INSTALL_RPATH "${BIT_PARALLEL_INSTALL_ROOT}/lib")
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
-add_executable(test-client src/applications/test_client.cpp src/copyable_atomic.cpp src/plain_socket.cpp)
-target_compile_options(test-client PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-std=c++17 -O3>)
-target_link_libraries(test-client Threads::Threads)
+add_library(socket-bp-v1.0 SHARED ${PROJECT_SOURCE_DIR}/src/copyable_atomic.cpp ${PROJECT_SOURCE_DIR}/src/plain_socket.cpp ${PROJECT_SOURCE_DIR}/src/listen_socket.cpp)
+install(TARGETS socket-bp-v1.0 DESTINATION ${BIT_PARALLEL_INSTALL_ROOT}/lib)
 
-add_executable(test-server src/applications/test_server.cpp src/copyable_atomic.cpp src/listen_socket.cpp src/plain_socket.cpp)
-target_compile_options(test-server PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-std=c++17 -O3>)
-target_link_libraries(test-server Threads::Threads)
+add_executable(test-client-socket ${PROJECT_SOURCE_DIR}/src/applications/test_client.cpp)
+target_link_libraries(test-client-socket socket-bp-v1.0)
+
+add_executable(test-server-socket ${PROJECT_SOURCE_DIR}/src/applications/test_server.cpp)
+target_link_libraries(test-server-socket socket-bp-v1.0)
+
+install(TARGETS test-client-socket test-server-socket DESTINATION ${BIT_PARALLEL_INSTALL_ROOT}/bin)
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/include DESTINATION ${BIT_PARALLEL_INSTALL_ROOT})
