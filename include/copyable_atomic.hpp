@@ -17,21 +17,10 @@ namespace bpl
     template<class T> class CopyableAtomic : public std::atomic<T>
     {
         public:
-            CopyableAtomic() = default;
-
-            constexpr CopyableAtomic(T value):
-                std::atomic<T>(value) {
-            }
-
-            constexpr CopyableAtomic(const CopyableAtomic<T>& value):
-                CopyableAtomic(value.load(std::memory_order_acquire)) {
-            }
-
-            CopyableAtomic& operator=(const CopyableAtomic<T>& value)
-            {
-                this->store(value.load(std::memory_order_acquire), std::memory_order_release);
-                return *this;
-            }
+            CopyableAtomic();
+            CopyableAtomic(T value);
+            CopyableAtomic(const CopyableAtomic<T>& value);
+            CopyableAtomic& operator=(const CopyableAtomic<T>& value);
     };
 }
 
