@@ -5,7 +5,7 @@
 - C++ 2017 and greater
 
 #### Build Instructions
-To build and run the test application
+To build and run the test application, use:
 
 ```
 mkdir build
@@ -17,13 +17,13 @@ make -j4
 ```
 
 #### Install Instructions
-To install the core shared library, the include files and test applications
+To install the core shared library, the include files and test applications, use:
 
 ```
 make install
 ```
 
-The following default paths are used, edit `CMakeLists.txt` to update these
+The following default paths are used, edit `CMakeLists.txt` if you want to update these
 - The shared library is installed to `bit-parallel/lib`
 - The include files are installed to `bit-parallel/include`
 - The test appliactions are installed to `bit-parallel/bin`
