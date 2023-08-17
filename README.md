@@ -12,9 +12,21 @@ mkdir build
 cd build
 cmake ..
 make -j4
-./test-server
-./test-client
+./test-server-socket
+./test-client-socket
 ```
+
+#### Install Instructions
+To install the core shared library, the include files and test applications
+
+```
+make install
+```
+
+The following default paths are used, edit `CMakeLists.txt` to update these
+- The shared library is installed to `bit-parallel/lib`
+- The include files are installed to `bit-parallel/include`
+- The test appliactions are installed to `bit-parallel/bin`
 
 #### Notes
 - Listen sockets are implemented by the `ListenSocket` class defined in `listen-socket.hpp`
