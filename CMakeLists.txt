@@ -9,8 +9,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-pthread -O3")
 
 # notes 1, setup the install base path for the simple socket shared library, include files and the test applications
 #       2, setup the RPATH for the test applications in bin/ directory
-#
-# note, choose the path to /usr/local/bit-parallel once ready to deploy in production
+#       3, choose the /usr/local/bit-parallel path once ready to deploy in production (or edit to suit your needs)
 #
 #set(BIT_PARALLEL_INSTALL_ROOT "/usr/local/bit-parallel")
 set(BIT_PARALLEL_INSTALL_ROOT "${PROJECT_SOURCE_DIR}/bit-parallel")
