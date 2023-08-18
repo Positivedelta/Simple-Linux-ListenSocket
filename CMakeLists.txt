@@ -10,8 +10,9 @@ set(CMAKE_CXX_FLAGS_RELEASE "-pthread -O3")
 # notes 1, setup the install base path for the simple socket shared library, include files and the test applications
 #       2, setup the RPATH for the test applications in bin/ directory
 #
-# FIXME! update the path to /usr/local/bit-parallel once ready to deploy in production
+# note, choose the path to /usr/local/bit-parallel once ready to deploy in production
 #
+#set(BIT_PARALLEL_INSTALL_ROOT "/usr/local/bit-parallel")
 set(BIT_PARALLEL_INSTALL_ROOT "${PROJECT_SOURCE_DIR}/bit-parallel")
 set(CMAKE_INSTALL_RPATH "${BIT_PARALLEL_INSTALL_ROOT}/lib")
 
@@ -25,5 +26,6 @@ target_link_libraries(test-client-socket socket-bp-v1.0)
 add_executable(test-server-socket ${PROJECT_SOURCE_DIR}/src/applications/test_server.cpp)
 target_link_libraries(test-server-socket socket-bp-v1.0)
 
-install(TARGETS test-client-socket test-server-socket DESTINATION ${BIT_PARALLEL_INSTALL_ROOT}/bin)
-install(DIRECTORY ${PROJECT_SOURCE_DIR}/include DESTINATION ${BIT_PARALLEL_INSTALL_ROOT})
+install(TARGETS test-client-socket test-server-socket DESTINATION ${BIT_PARALLEL_INSTALL_ROOT}/bin/socket)
+file(GLOB SOCKET_HPP_FILES "${PROJECT_SOURCE_DIR}/include/*.hpp")
+install(FILES ${SOCKET_HPP_FILES} DESTINATION ${BIT_PARALLEL_INSTALL_ROOT}/include/socket)
