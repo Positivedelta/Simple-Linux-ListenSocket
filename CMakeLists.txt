@@ -25,6 +25,11 @@ target_link_libraries(test-client-socket socket-bp-v1.0)
 add_executable(test-server-socket ${PROJECT_SOURCE_DIR}/src/applications/test_server.cpp)
 target_link_libraries(test-server-socket socket-bp-v1.0)
 
-install(TARGETS test-client-socket test-server-socket DESTINATION ${BIT_PARALLEL_INSTALL_ROOT}/bin/socket)
+# notes 1, read_listener.hpp is used by other projects, so added to the root of the communications include directory
+#       2, this file is then excluded from the actual socket include files
+#
+install(TARGETS test-client-socket test-server-socket DESTINATION ${BIT_PARALLEL_INSTALL_ROOT}/bin/communications/socket)
+install(FILES ${PROJECT_SOURCE_DIR}/include/read_listener.hpp DESTINATION ${BIT_PARALLEL_INSTALL_ROOT}/include/communications)
 file(GLOB SOCKET_HPP_FILES "${PROJECT_SOURCE_DIR}/include/*.hpp")
-install(FILES ${SOCKET_HPP_FILES} DESTINATION ${BIT_PARALLEL_INSTALL_ROOT}/include/socket)
+list(REMOVE_ITEM SOCKET_HPP_FILES "${PROJECT_SOURCE_DIR}/include/read_listener.hpp")
+install(FILES ${SOCKET_HPP_FILES} DESTINATION ${BIT_PARALLEL_INSTALL_ROOT}/include/communications/socket)
